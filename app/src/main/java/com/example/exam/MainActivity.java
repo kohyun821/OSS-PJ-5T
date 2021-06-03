@@ -82,16 +82,13 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         ProgressTask task = new ProgressTask();
         task.execute("Start");
 
-
-        Log.d(TAG,"on Map Ready잘 실행 되는가?");
-
         LatLng SEOUL = new LatLng(37.56, 126.97);
 
-        MarkerOptions markerOptions = new MarkerOptions();
-        markerOptions.position(SEOUL);
-        markerOptions.title("서울");
-        markerOptions.snippet("한국의 수도");
-        mMap.addMarker(markerOptions);
+//        MarkerOptions markerOptions = new MarkerOptions();
+//        markerOptions.position(SEOUL);
+//        markerOptions.title("서울");
+//        markerOptions.snippet("한국의 수도");
+//        mMap.addMarker(markerOptions);
         googleMap.setOnMapLoadedCallback(new GoogleMap.OnMapLoadedCallback() {
             @Override
             public void onMapLoaded() {
@@ -149,8 +146,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     @Override
     public boolean onMarkerClick(Marker marker) {
+        mMap.moveCamera(CameraUpdateFactory.newLatLng(marker.getPosition()));
         Toast.makeText(this, marker.getTitle() +"\n"+marker.getSnippet(),Toast.LENGTH_SHORT).show();
-        return false;
+        return true;
     }
 
 
@@ -165,7 +163,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 //        String str= edit.getText().toString();//EditText에 작성된 Text얻어오기
 //        String location = URLEncoder.encode(str);
 
-            String queryUrl="http://openapi.kepco.co.kr/service/EvInfoServiceV2/getEvSearchList?pageNo=1&numOfRows=10&ServiceKey="+key;
+            String queryUrl="http://openapi.kepco.co.kr/service/EvInfoServiceV2/getEvSearchList?pageNo=1&numOfRows=3000&ServiceKey="+key;
             try{
 
                 Charging charging = null;
