@@ -10,6 +10,8 @@ import android.location.Location;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -40,6 +42,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     String key="us2ROEBp96Lg%2F%2FFoXYqqzHC3S1TgYQQFrruf%2FbjcENdpvC3PsZnoWsV1jb8VJLuNXorx%2BL75uwFTfFLSj2bI8Q%3D%3D";
     String data;
+    EditText edit;
+    TextView text;
 
     private GoogleMap mMap;
     private FusedLocationProviderClient mFusedLocation;
@@ -51,37 +55,171 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
-                .findFragmentById(R.id.map);
-        mapFragment.getMapAsync(this);
-        chargings = xml_parse();
+//        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
+//                .findFragmentById(R.id.map);
+//        mapFragment.getMapAsync(this);
+        //chargings = xml_parse();
+
+        text= (TextView)findViewById(R.id.result);
+
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                data=getXmlData();
+
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        text.setText(data);
+                    }
+                });
+            }
+        }).start();
 //        for(int i=0; i<chargings.size();i++){
 //            charging.add(i,chargings.get(i));
 //        }
-        mFusedLocation = LocationServices.getFusedLocationProviderClient(this);
+
+        //mFusedLocation = LocationServices.getFusedLocationProviderClient(this);
 
     }
 
-//    public void mOnClick(View v){
-//        switch (v.getId()){
-//            case R.id.button:
-//                new Thread(new Runnable() {
-//                    @Override
-//                    public void run() {
-//                        data=getXmlData();
-//
-//                        runOnUiThread(new Runnable() {
-//                            @Override
-//                            public void run() {
-//                                text.setText(data);
-//                            }
-//                        });
-//                    }
-//                }).start();
-//                break;
-//        }
-//    }
 
+
+    private String getXmlData() {
+        StringBuffer buffer=new StringBuffer();
+//        String str= edit.getText().toString();//EditText에 작성된 Text얻어오기
+//        String location = URLEncoder.encode(str);
+        String query="%EC%A0%84%EB%A0%A5%EB%A1%9C";
+
+        String queryUrl="http://openapi.kepco.co.kr/service/EvInfoServiceV2/getEvSearchList?pageNo=1&numOfRows=10&ServiceKey="+key;
+        try{
+
+            //Charging charging = new Charging();
+
+            URL url= new URL(queryUrl);//문자열로 된 요청 url을 URL 객체로 생성.
+            InputStream is= url.openStream(); //url위치로 입력스트림 연결
+
+            XmlPullParserFactory factory= XmlPullParserFactory.newInstance();//xml파싱을 위한
+            XmlPullParser xpp= factory.newPullParser();
+            xpp.setInput( new InputStreamReader(is, "UTF-8") ); //inputstream 으로부터 xml 입력받기
+
+            String tag;
+
+            xpp.next();
+            int eventType= xpp.getEventType();
+            while( eventType != XmlPullParser.END_DOCUMENT ){
+                switch( eventType ){
+                    case XmlPullParser.START_DOCUMENT:
+                        buffer.append("파싱 시작...\n\n");
+                        break;
+
+                    case XmlPullParser.START_TAG:
+
+                        tag= xpp.getName();//테그 이름 얻어오기
+
+                        if(tag.equals("item"));
+
+                        else if(tag.equals("addr")){
+                            buffer.append("주소 : ");
+                            xpp.next();
+                            buffer.append(xpp.getText());//title 요소의 TEXT 읽어와서 문자열버퍼에 추가
+                            //charging.setAddr(xpp.getText());
+                            buffer.append("\n"); //줄바꿈 문자 추가
+                        }
+                        else if(tag.equals("chargeTp")){
+                            buffer.append("충전소타입 : ");
+                            xpp.next();
+                            buffer.append(xpp.getText());//category 요소의 TEXT 읽어와서 문자열버퍼에 추가
+                            //charging.setChargeTp(xpp.getText());
+                            buffer.append("\n");//줄바꿈 문자 추가
+                        }
+                        else if(tag.equals("cpId")){
+                            buffer.append("충전소ID :");
+                            xpp.next();
+                            buffer.append(xpp.getText());//description 요소의 TEXT 읽어와서 문자열버퍼에 추가
+                           // charging.setCpId(xpp.getText());
+                            buffer.append("\n");//줄바꿈 문자 추가
+                        }
+                        else if(tag.equals("cpNm")){
+                            buffer.append("충전기 명칭 :");
+                            xpp.next();
+                            buffer.append(xpp.getText());//telephone 요소의 TEXT 읽어와서 문자열버퍼에 추가
+                            //charging.setCpNm(xpp.getText());
+                            buffer.append("\n");//줄바꿈 문자 추가
+                        }
+                        else if(tag.equals("cpStat")){
+                            buffer.append("충전기 상태 코드 :");
+                            xpp.next();
+                            buffer.append(xpp.getText());//address 요소의 TEXT 읽어와서 문자열버퍼에 추가
+                            //charging.setCpStat(xpp.getText());
+                            buffer.append("\n");//줄바꿈 문자 추가
+                        }
+                        else if(tag.equals("cpTp")){
+                            buffer.append("충전 방식 :");
+                            xpp.next();
+                            buffer.append(xpp.getText());//mapx 요소의 TEXT 읽어와서 문자열버퍼에 추가
+                            //charging.setCpTp(xpp.getText());
+                            buffer.append("  ,  "); //줄바꿈 문자 추가
+                        }
+                        else if(tag.equals("csId")){
+                            buffer.append("충전소 ID :");
+                            xpp.next();
+                            buffer.append(xpp.getText());//mapy 요소의 TEXT 읽어와서 문자열버퍼에 추가
+                            //charging.setCsId(xpp.getText());
+                            buffer.append("\n"); //줄바꿈 문자 추가
+                        }
+                        else if(tag.equals("csNm")){
+                            buffer.append("충전소 명칭 :");
+                            xpp.next();
+                            buffer.append(xpp.getText());//mapy 요소의 TEXT 읽어와서 문자열버퍼에 추가
+                            //charging.setCsNm(xpp.getText());
+                            buffer.append("\n"); //줄바꿈 문자 추가
+                        }
+                        else if(tag.equals("lat")){
+                            buffer.append("위도 :");
+                            xpp.next();
+                            buffer.append(xpp.getText());//mapy 요소의 TEXT 읽어와서 문자열버퍼에 추가
+                            //charging.setLat(xpp.getText());
+                            buffer.append("\n"); //줄바꿈 문자 추가
+                        }
+                        else if(tag.equals("longi")){
+                            buffer.append("경도 :");
+                            xpp.next();
+                            buffer.append(xpp.getText());//mapy 요소의 TEXT 읽어와서 문자열버퍼에 추가
+                            //charging.setLongi(xpp.getText());
+                            buffer.append("\n"); //줄바꿈 문자 추가
+                        }
+                        else if(tag.equals("statUpdateDatetime")){
+
+                            buffer.append("충전기상태갱신시각 :");
+                            xpp.next();
+                            //charging.setStatUpdateDatetime(xpp.getText());
+                            buffer.append(xpp.getText());//mapy 요소의 TEXT 읽어와서 문자열버퍼에 추가
+                            buffer.append("\n"); //줄바꿈 문자 추가
+                        }
+                        break;
+
+                    case XmlPullParser.TEXT:
+                        break;
+
+                    case XmlPullParser.END_TAG:
+                        tag= xpp.getName(); //테그 이름 얻어오기
+
+                        if(tag.equals("item")) buffer.append("\n");// 첫번째 검색결과종료..줄바꿈
+                        break;
+                }
+
+                eventType= xpp.next();
+            }
+
+        } catch (Exception e){
+            e.printStackTrace();
+        }
+
+        buffer.append("파싱 끝\n");
+//        return buffer.toString();//StringBuffer 문자열 객체 반환
+        return buffer.toString();
+    }
 
     private ArrayList<Charging> xml_parse() {
         ArrayList<Charging> chargingArrayList = new ArrayList<Charging>();
@@ -99,13 +237,13 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             InputStream is= url.openStream(); //url위치로 입력스트림 연결
 
             XmlPullParserFactory factory= XmlPullParserFactory.newInstance();//xml파싱을 위한
-            XmlPullParser xmlPullParser= factory.newPullParser();
-            xmlPullParser.setInput( new InputStreamReader(is, "UTF-8") ); //inputstream 으로부터 xml 입력받기
+            XmlPullParser xpp= factory.newPullParser();
+            xpp.setInput( new InputStreamReader(is, "UTF-8") ); //inputstream 으로부터 xml 입력받기
 
             String tag;
 
-            xmlPullParser.next();
-            int eventType= xmlPullParser.getEventType();
+            xpp.next();
+            int eventType= xpp.getEventType();
             while( eventType != XmlPullParser.END_DOCUMENT ){
                 switch( eventType ){
                     case XmlPullParser.START_DOCUMENT:
@@ -114,97 +252,87 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
                     case XmlPullParser.START_TAG:
 
-                        tag= xmlPullParser.getName();//테그 이름 얻어오기
+                        tag= xpp.getName();//테그 이름 얻어오기
 
                         if(tag.equals("item"));
 
                         else if(tag.equals("addr")){
-                            xmlPullParser.next();
-                            charging.setAddr(xmlPullParser.getText());
-//                            buffer.append("주소 : ");
-//                            xpp.next();
-//                            buffer.append(xpp.getText());//title 요소의 TEXT 읽어와서 문자열버퍼에 추가
-//                            buffer.append("\n"); //줄바꿈 문자 추가
+                            buffer.append("주소 : ");
+                            xpp.next();
+                            buffer.append(xpp.getText());//title 요소의 TEXT 읽어와서 문자열버퍼에 추가
+                            charging.setAddr(xpp.getText());
+                            buffer.append("\n"); //줄바꿈 문자 추가
                         }
                         else if(tag.equals("chargeTp")){
-                            xmlPullParser.next();
-                            charging.setChargeTp(xmlPullParser.getText());
-//                            buffer.append("충전소타입 : ");
-//                            xpp.next();
-//                            buffer.append(xpp.getText());//category 요소의 TEXT 읽어와서 문자열버퍼에 추가
-//                            buffer.append("\n");//줄바꿈 문자 추가
+                            buffer.append("충전소타입 : ");
+                            xpp.next();
+                            buffer.append(xpp.getText());//category 요소의 TEXT 읽어와서 문자열버퍼에 추가
+                            charging.setChargeTp(xpp.getText());
+                            buffer.append("\n");//줄바꿈 문자 추가
                         }
                         else if(tag.equals("cpId")){
-                            xmlPullParser.next();
-                            charging.setCpId(xmlPullParser.getText());
-//                            buffer.append("충전소ID :");
-//                            xpp.next();
-//                            buffer.append(xpp.getText());//description 요소의 TEXT 읽어와서 문자열버퍼에 추가
-//                            buffer.append("\n");//줄바꿈 문자 추가
+                            buffer.append("충전소ID :");
+                            xpp.next();
+                            buffer.append(xpp.getText());//description 요소의 TEXT 읽어와서 문자열버퍼에 추가
+                            charging.setCpId(xpp.getText());
+                            buffer.append("\n");//줄바꿈 문자 추가
                         }
                         else if(tag.equals("cpNm")){
-                            xmlPullParser.next();
-                            charging.setCpNm(xmlPullParser.getText());
-//                            buffer.append("충전기 명칭 :");
-//                            xpp.next();
-//                            buffer.append(xpp.getText());//telephone 요소의 TEXT 읽어와서 문자열버퍼에 추가
-//                            buffer.append("\n");//줄바꿈 문자 추가
+                            buffer.append("충전기 명칭 :");
+                            xpp.next();
+                            buffer.append(xpp.getText());//telephone 요소의 TEXT 읽어와서 문자열버퍼에 추가
+                            charging.setCpNm(xpp.getText());
+                            buffer.append("\n");//줄바꿈 문자 추가
                         }
                         else if(tag.equals("cpStat")){
-                            xmlPullParser.next();
-                            charging.setCpStat(xmlPullParser.getText());
-//                            buffer.append("충전기 상태 코드 :");
-//                            xpp.next();
-//                            buffer.append(xpp.getText());//address 요소의 TEXT 읽어와서 문자열버퍼에 추가
-//                            buffer.append("\n");//줄바꿈 문자 추가
+                            buffer.append("충전기 상태 코드 :");
+                            xpp.next();
+                            buffer.append(xpp.getText());//address 요소의 TEXT 읽어와서 문자열버퍼에 추가
+                            charging.setCpStat(xpp.getText());
+                            buffer.append("\n");//줄바꿈 문자 추가
                         }
                         else if(tag.equals("cpTp")){
-                            xmlPullParser.next();
-                            charging.setCpTp(xmlPullParser.getText());
-//                            buffer.append("충전 방식 :");
-//                            xpp.next();
-//                            buffer.append(xpp.getText());//mapx 요소의 TEXT 읽어와서 문자열버퍼에 추가
-//                            buffer.append("  ,  "); //줄바꿈 문자 추가
+                            buffer.append("충전 방식 :");
+                            xpp.next();
+                            buffer.append(xpp.getText());//mapx 요소의 TEXT 읽어와서 문자열버퍼에 추가
+                            charging.setCpTp(xpp.getText());
+                            buffer.append("  ,  "); //줄바꿈 문자 추가
                         }
                         else if(tag.equals("csId")){
-                            xmlPullParser.next();
-                            charging.setCsId(xmlPullParser.getText());
-//                            buffer.append("충전소 ID :");
-//                            xpp.next();
-//                            buffer.append(xpp.getText());//mapy 요소의 TEXT 읽어와서 문자열버퍼에 추가
-//                            buffer.append("\n"); //줄바꿈 문자 추가
+                            buffer.append("충전소 ID :");
+                            xpp.next();
+                            buffer.append(xpp.getText());//mapy 요소의 TEXT 읽어와서 문자열버퍼에 추가
+                            charging.setCsId(xpp.getText());
+                            buffer.append("\n"); //줄바꿈 문자 추가
                         }
                         else if(tag.equals("csNm")){
-                            xmlPullParser.next();
-                            charging.setCsNm(xmlPullParser.getText());
-//                            buffer.append("충전소 명칭 :");
-//                            xpp.next();
-//                            buffer.append(xpp.getText());//mapy 요소의 TEXT 읽어와서 문자열버퍼에 추가
-//                            buffer.append("\n"); //줄바꿈 문자 추가
+                            buffer.append("충전소 명칭 :");
+                            xpp.next();
+                            buffer.append(xpp.getText());//mapy 요소의 TEXT 읽어와서 문자열버퍼에 추가
+                            charging.setCsNm(xpp.getText());
+                            buffer.append("\n"); //줄바꿈 문자 추가
                         }
                         else if(tag.equals("lat")){
-                            xmlPullParser.next();
-                            charging.setLat(xmlPullParser.getText());
-//                            buffer.append("위도 :");
-//                            xpp.next();
-//                            buffer.append(xpp.getText());//mapy 요소의 TEXT 읽어와서 문자열버퍼에 추가
-//                            buffer.append("\n"); //줄바꿈 문자 추가
+                            buffer.append("위도 :");
+                            xpp.next();
+                            buffer.append(xpp.getText());//mapy 요소의 TEXT 읽어와서 문자열버퍼에 추가
+                            charging.setLat(xpp.getText());
+                            buffer.append("\n"); //줄바꿈 문자 추가
                         }
                         else if(tag.equals("longi")){
-                            xmlPullParser.next();
-                            charging.setLongi(xmlPullParser.getText());
-//                            buffer.append("경도 :");
-//                            xpp.next();
-//                            buffer.append(xpp.getText());//mapy 요소의 TEXT 읽어와서 문자열버퍼에 추가
-//                            buffer.append("\n"); //줄바꿈 문자 추가
+                            buffer.append("경도 :");
+                            xpp.next();
+                            buffer.append(xpp.getText());//mapy 요소의 TEXT 읽어와서 문자열버퍼에 추가
+                            charging.setLongi(xpp.getText());
+                            buffer.append("\n"); //줄바꿈 문자 추가
                         }
                         else if(tag.equals("statUpdateDatetime")){
-                            xmlPullParser.next();
-                            charging.setStatUpdateDatetime(xmlPullParser.getText());
-//                            buffer.append("충전기상태갱신시각 :");
-//                            xpp.next();
-//                            buffer.append(xpp.getText());//mapy 요소의 TEXT 읽어와서 문자열버퍼에 추가
-//                            buffer.append("\n"); //줄바꿈 문자 추가
+
+                            buffer.append("충전기상태갱신시각 :");
+                            xpp.next();
+                            charging.setStatUpdateDatetime(xpp.getText());
+                            buffer.append(xpp.getText());//mapy 요소의 TEXT 읽어와서 문자열버퍼에 추가
+                            buffer.append("\n"); //줄바꿈 문자 추가
                         }
                         break;
 
@@ -212,7 +340,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                         break;
 
                     case XmlPullParser.END_TAG:
-                        tag= xmlPullParser.getName(); //테그 이름 얻어오기
+                        tag= xpp.getName(); //테그 이름 얻어오기
 
                         if(tag.equals("item")){
                             chargingArrayList.add(charging);
