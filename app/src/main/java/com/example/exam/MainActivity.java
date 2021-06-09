@@ -39,6 +39,7 @@ import org.xmlpull.v1.XmlPullParserFactory;
 
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.lang.reflect.Array;
 import java.net.URL;
 import java.util.ArrayList;
 
@@ -77,40 +78,22 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     @Override
     public void onMapReady(final GoogleMap googleMap) {
         mMap = googleMap;
-        String TAG = "maploading";
-
-        ProgressTask task = new ProgressTask();
-        task.execute("Start");
-
         LatLng SEOUL = new LatLng(37.56, 126.97);
-
-//        MarkerOptions markerOptions = new MarkerOptions();
-//        markerOptions.position(SEOUL);
-//        markerOptions.title("서울");
-//        markerOptions.snippet("한국의 수도");
-//        mMap.addMarker(markerOptions);
         googleMap.setOnMapLoadedCallback(new GoogleMap.OnMapLoadedCallback() {
+
+
             @Override
             public void onMapLoaded() {
                 mMap.moveCamera(CameraUpdateFactory.newLatLng(SEOUL));
                 mMap.animateCamera(CameraUpdateFactory.zoomTo(10));
             }
         });
-
         mMap.setOnMarkerClickListener(this);
-
     }
 
     //내 위치 확인!
     public void onLastLocationButtonClicked(View view) {
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
             ActivityCompat.requestPermissions(this,
                     new String[] {Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION},
                     REQUEST_CODE_PERMISSONS);
@@ -119,13 +102,45 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         mFusedLocation.getLastLocation().addOnSuccessListener(this, new OnSuccessListener<Location>() {
             @Override
             public void onSuccess(Location location) {
+                ArrayList<Charging> tradArr = new ArrayList<Charging>();
+                String TAG = "위치 수락";
+                Log.d(TAG,"어레이 리스느 tradArr의 크기 : "+tradArr.size());
+
+
                 if(location != null){
+                    Log.d(TAG,"로케이션 널이 아니라면 아래 실행");
                     LatLng myLocation = new LatLng(location.getLatitude(), location.getLongitude());
                     mMap.addMarker(new MarkerOptions().position(myLocation).title("현재 위치"));
                     mMap.moveCamera(CameraUpdateFactory.newLatLng(myLocation));
                     mMap.animateCamera(CameraUpdateFactory.zoomTo(17));
-                }
 
+                    //맵 초기화
+                    mMap.clear();
+
+                    mMap.getUiSettings().setMyLocationButtonEnabled(true);
+                    MarkerOptions marker = new MarkerOptions();
+
+                    ArrayList <Location> taraddr = new ArrayList<Location>();
+
+                    for(int i=0 ;i<chargings.size();i++){
+                        Location targetLocation = new Location("");
+                        targetLocation.setLatitude(Double.parseDouble(chargings.get(i).getLat()));
+                        targetLocation.setLongitude(Double.parseDouble(chargings.get(i).getLongi()));
+                        float distance = location.distanceTo(targetLocation) /1000;
+
+                        taraddr.add(targetLocation);
+                        if(distance<=10){
+                            Log.d(TAG,chargings.get(i).addr +"판매점 과의 거리 : "+distance + "km");
+                            LatLng latLng = new LatLng(Double.parseDouble(chargings.get(i).lat), Double.parseDouble(chargings.get(i).longi));
+                            marker.position(latLng);
+                            marker.title("충전소의 주소 : "+chargings.get(i).addr);
+                            marker.snippet("충전기 타입 : "+chargings.get(i).cpNm+"\n"
+                                    +"충전 방식 : " + chargings.get(i).cpTp + "\n");
+
+                            mMap.addMarker(marker);
+                        }
+                    }
+                }
             }
         });
 
@@ -279,25 +294,25 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
                 switch (Integer.parseInt(chargings.get(i).cpTp)){
                     case 1 :
-                        cpTP="B타입(5핀)";
+                        chargings.get(i).setCpTp("B타입(5핀)");
                     case 2:
-                        cpTP="C타입(5핀)";
+                        chargings.get(i).setCpTp("C타입(5핀)");
                     case 3:
-                        cpTP="BC타입(5핀)";
+                        chargings.get(i).setCpTp("BC타입(5핀)");
                     case 4:
-                        cpTP="BC타입(7핀)";
+                        chargings.get(i).setCpTp("BC타입(7핀)");
                     case 5:
-                        cpTP="DC차데모";
+                        chargings.get(i).setCpTp("DC차데모");
                     case 6:
-                        cpTP="AC3상";
+                        chargings.get(i).setCpTp("AC3상");
                     case 7:
-                        cpTP="DC콤보";
+                        chargings.get(i).setCpTp("DC콤보");
                     case 8:
-                        cpTP="DC차데모+DC콤보";
+                        chargings.get(i).setCpTp("DC차데모+DC콤보");
                     case 9:
-                        cpTP="DC차데모+AC3상";
+                        chargings.get(i).setCpTp("DC차데모+AC3상");
                     case 10:
-                        cpTP="DC차데모+DC콤보+AC3상";
+                        chargings.get(i).setCpTp("DC차데모+DC콤보+AC3상");
                     default:{
                         break;
                     }
@@ -308,11 +323,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 markerOptions.position(latLng);
                 markerOptions.title("충전소의 주소 : "+chargings.get(i).addr);
                 markerOptions.snippet("충전기 타입 : "+chargings.get(i).cpNm+"\n"
-                        +"충전 방식 : " + cpTP + "\n");
-
-                Log.d(TAG,"충전소의 주소 : "+chargings.get(i).addr+"\n"
-                        +"충전기 타입 : "+chargings.get(i).cpNm+"\n"
-                        +"충전 방식 : " + cpTP + "\n");
+                        +"충전 방식 : " + chargings.get(i).getCpTp() + "\n");
 
                 mMap.addMarker(markerOptions);
 
