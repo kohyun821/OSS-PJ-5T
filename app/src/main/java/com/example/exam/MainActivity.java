@@ -1,26 +1,16 @@
 package com.example.exam;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
 import android.Manifest;
-import android.content.Context;
-import android.content.DialogInterface;
 import android.content.pm.PackageManager;
-import android.graphics.Color;
-import android.graphics.Typeface;
 import android.location.Location;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.Gravity;
 import android.view.View;
-import android.widget.EditText;
-import android.widget.LinearLayout;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -39,19 +29,11 @@ import org.xmlpull.v1.XmlPullParserFactory;
 
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.lang.reflect.Array;
 import java.net.URL;
 import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity implements OnMapReadyCallback, GoogleMap.OnMarkerClickListener{
     private static final int REQUEST_CODE_PERMISSONS = 1000;
-    XmlPullParser xpp;
-    Context context = this;
-
-    String key="us2ROEBp96Lg%2F%2FFoXYqqzHC3S1TgYQQFrruf%2FbjcENdpvC3PsZnoWsV1jb8VJLuNXorx%2BL75uwFTfFLSj2bI8Q%3D%3D";
-    String data;
-    EditText edit;
-    TextView text;
 
     private GoogleMap mMap;
     private FusedLocationProviderClient mFusedLocation;
@@ -78,10 +60,12 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     @Override
     public void onMapReady(final GoogleMap googleMap) {
         mMap = googleMap;
+
+        ProgressTask task = new ProgressTask();
+        task.execute("Start");
+
         LatLng SEOUL = new LatLng(37.56, 126.97);
         googleMap.setOnMapLoadedCallback(new GoogleMap.OnMapLoadedCallback() {
-
-
             @Override
             public void onMapLoaded() {
                 mMap.moveCamera(CameraUpdateFactory.newLatLng(SEOUL));
@@ -168,11 +152,12 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
 
     class ProgressTask extends AsyncTask<String, Integer, ArrayList<Charging>>{
+        String key="us2ROEBp96Lg%2F%2FFoXYqqzHC3S1TgYQQFrruf%2FbjcENdpvC3PsZnoWsV1jb8VJLuNXorx%2BL75uwFTfFLSj2bI8Q%3D%3D";
         GoogleMap googleMap;
         String TAG = "AsyncTask";
-
         @Override
         protected ArrayList<Charging> doInBackground(String... strings) {
+            Log.d(TAG,"AsyncTask시작");
             ArrayList<Charging> chargingArrayList = new ArrayList<Charging>();
             StringBuffer buffer=new StringBuffer();
 //        String str= edit.getText().toString();//EditText에 작성된 Text얻어오기
@@ -180,6 +165,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
             String queryUrl="http://openapi.kepco.co.kr/service/EvInfoServiceV2/getEvSearchList?pageNo=1&numOfRows=3000&ServiceKey="+key;
             try{
+                Log.d(TAG,"파싱 시작 ");
 
                 Charging charging = null;
 
@@ -271,11 +257,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             } catch (Exception e){
                 e.printStackTrace();
             }
-//        return buffer.toString();//StringBuffer 문자열 객체 반환
-
-
             return chargingArrayList;
-
         }
 
         @Override
@@ -329,9 +311,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
 
             }
-            
+
             Toast.makeText(getApplicationContext(), "파싱 완료", Toast.LENGTH_LONG).show();
         }
     }
 }
-
