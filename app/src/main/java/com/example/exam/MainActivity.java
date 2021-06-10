@@ -1,10 +1,12 @@
 package com.example.exam;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
 import android.Manifest;
+import android.content.DialogInterface;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.AsyncTask;
@@ -104,15 +106,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     mMap.getUiSettings().setMyLocationButtonEnabled(true);
                     MarkerOptions marker = new MarkerOptions();
 
-                    ArrayList <Location> taraddr = new ArrayList<Location>();
-
                     for(int i=0 ;i<chargings.size();i++){
                         Location targetLocation = new Location("");
                         targetLocation.setLatitude(Double.parseDouble(chargings.get(i).getLat()));
                         targetLocation.setLongitude(Double.parseDouble(chargings.get(i).getLongi()));
                         float distance = location.distanceTo(targetLocation) /1000;
-
-                        taraddr.add(targetLocation);
                         if(distance<=10){
                             Log.d(TAG,chargings.get(i).addr +"판매점 과의 거리 : "+distance + "km");
                             LatLng latLng = new LatLng(Double.parseDouble(chargings.get(i).lat), Double.parseDouble(chargings.get(i).longi));
@@ -146,7 +144,24 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     @Override
     public boolean onMarkerClick(Marker marker) {
         mMap.moveCamera(CameraUpdateFactory.newLatLng(marker.getPosition()));
-        Toast.makeText(this, marker.getTitle() +"\n"+marker.getSnippet(),Toast.LENGTH_SHORT).show();
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+
+        builder.setTitle("충전소 상세 설명").setMessage(marker.getTitle()+"\n"+marker.getSnippet());
+
+
+        builder.setPositiveButton("확인", new DialogInterface.OnClickListener(){
+            @Override
+            public void onClick(DialogInterface dialog, int id)
+            {
+                Toast.makeText(getApplicationContext(), "확인 하였습니다.", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        AlertDialog alertDialog = builder.create();
+        alertDialog.show();
+        
+        //Toast.makeText(this, marker.getTitle() +"\n"+marker.getSnippet(),Toast.LENGTH_SHORT).show();
         return true;
     }
 
