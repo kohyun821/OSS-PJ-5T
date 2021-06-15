@@ -19,24 +19,34 @@
 
         <RelativeLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="wrap_content"
+            android:padding="5dp"
+            android:paddingStart="5dp"
+            android:paddingLeft="5dp"
+            android:paddingTop="5dp"
+            android:paddingBottom="5dp">
 
-            <Button
+            <androidx.appcompat.widget.AppCompatButton
                 android:id="@+id/button2"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_alignParentRight="true"
+                android:layout_marginEnd="10dp"
+                android:background="@drawable/ic_btn_shape"
+                android:backgroundTint="@color/white"
+                android:textColor="@color/black"
                 android:onClick="onViewLocationButtonClicked"
-                android:radius="7dp"
                 android:text="보고 있는 위치" />
 
-            <Button
+            <androidx.appcompat.widget.AppCompatButton
                 android:id="@+id/button1"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
+                android:layout_marginLeft="10dp"
                 android:onClick="onLastLocationButtonClicked"
-                android:radius="7dp"
+                android:background="@drawable/ic_btn_shape"
+                android:backgroundTint="@color/white"
+                android:textColor="@color/black"
                 android:text="현재위치" />
         </RelativeLayout>
     </LinearLayout>
