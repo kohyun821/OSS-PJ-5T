@@ -1,26 +1,19 @@
 package com.example.exam;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
 import android.Manifest;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.pm.PackageManager;
-import android.graphics.Color;
-import android.graphics.Typeface;
 import android.location.Location;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.Gravity;
 import android.view.View;
-import android.widget.EditText;
-import android.widget.LinearLayout;
-import android.widget.TextView;
+import android.widget.Button;
 import android.widget.Toast;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -29,6 +22,7 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
@@ -44,13 +38,6 @@ import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity implements OnMapReadyCallback, GoogleMap.OnMarkerClickListener{
     private static final int REQUEST_CODE_PERMISSONS = 1000;
-    XmlPullParser xpp;
-    Context context = this;
-
-    String key="us2ROEBp96Lg%2F%2FFoXYqqzHC3S1TgYQQFrruf%2FbjcENdpvC3PsZnoWsV1jb8VJLuNXorx%2BL75uwFTfFLSj2bI8Q%3D%3D";
-    String data;
-    EditText edit;
-    TextView text;
 
     private GoogleMap mMap;
     private FusedLocationProviderClient mFusedLocation;
@@ -77,18 +64,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     @Override
     public void onMapReady(final GoogleMap googleMap) {
         mMap = googleMap;
-        String TAG = "maploading";
 
         ProgressTask task = new ProgressTask();
         task.execute("Start");
 
         LatLng SEOUL = new LatLng(37.56, 126.97);
-
-//        MarkerOptions markerOptions = new MarkerOptions();
-//        markerOptions.position(SEOUL);
-//        markerOptions.title("서울");
-//        markerOptions.snippet("한국의 수도");
-//        mMap.addMarker(markerOptions);
         googleMap.setOnMapLoadedCallback(new GoogleMap.OnMapLoadedCallback() {
             @Override
             public void onMapLoaded() {
@@ -96,21 +76,55 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 mMap.animateCamera(CameraUpdateFactory.zoomTo(10));
             }
         });
-
         mMap.setOnMarkerClickListener(this);
+    }
+
+    //보고 있는 위치
+    public void onViewLocationButtonClicked(View view){
+        int scale=0;
+        Location location = new Location("");
+        LatLng latLng = mMap.getProjection().getVisibleRegion().latLngBounds.getCenter();
+        location.setLatitude(latLng.latitude);
+        location.setLongitude(latLng.longitude);
+        //= mMap.getProjection().getVisibleRegion().latLngBounds.getCenter();
+        mMap.addMarker(new MarkerOptions().position(latLng).title("구글맵 중심"));
+        mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
+        mMap.animateCamera(CameraUpdateFactory.zoomTo(13));
+
+        //맵 초기화
+        mMap.clear();
+
+        mMap.getUiSettings().setMyLocationButtonEnabled(true);
+
+        MarkerOptions marker = new MarkerOptions();
+        for(int i=0 ;i<chargings.size();i++){
+            Location targetLocation = new Location("");
+            targetLocation.setLatitude(Double.parseDouble(chargings.get(i).getLat()));
+            targetLocation.setLongitude(Double.parseDouble(chargings.get(i).getLongi()));
+            float distance = location.distanceTo(targetLocation) /1000;
+            if(distance<=10){
+                LatLng latLng2 = new LatLng(Double.parseDouble(chargings.get(i).lat), Double.parseDouble(chargings.get(i).longi));
+                marker.position(latLng2);
+                marker.title("충전소의 주소 : "+chargings.get(i).addr);
+                marker.snippet("충전기 타입 : "+chargings.get(i).cpNm+"\n"
+                        +"충전 방식 : " + chargings.get(i).cpTp + "\n");
+                mMap.addMarker(marker);
+                scale++;
+
+            }
+        }
+        if(scale<=0){
+            Toast.makeText(this,"근처에 충전소가 위치해 있지 않습니다.",Toast.LENGTH_SHORT).show();
+        }
+        if(scale>0){
+            Toast.makeText(this,scale+"개의 충전소 발견!",Toast.LENGTH_SHORT).show();
+        }
 
     }
 
     //내 위치 확인!
     public void onLastLocationButtonClicked(View view) {
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
             ActivityCompat.requestPermissions(this,
                     new String[] {Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION},
                     REQUEST_CODE_PERMISSONS);
@@ -119,11 +133,33 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         mFusedLocation.getLastLocation().addOnSuccessListener(this, new OnSuccessListener<Location>() {
             @Override
             public void onSuccess(Location location) {
+                ArrayList<Charging> tradArr = new ArrayList<Charging>();
                 if(location != null){
                     LatLng myLocation = new LatLng(location.getLatitude(), location.getLongitude());
                     mMap.addMarker(new MarkerOptions().position(myLocation).title("현재 위치"));
                     mMap.moveCamera(CameraUpdateFactory.newLatLng(myLocation));
-                    mMap.animateCamera(CameraUpdateFactory.zoomTo(17));
+                    mMap.animateCamera(CameraUpdateFactory.zoomTo(13));
+
+                    //맵 초기화
+                    mMap.clear();
+
+                    mMap.getUiSettings().setMyLocationButtonEnabled(true);
+                    MarkerOptions marker = new MarkerOptions();
+
+                    for(int i=0 ;i<chargings.size();i++){
+                        Location targetLocation = new Location("");
+                        targetLocation.setLatitude(Double.parseDouble(chargings.get(i).getLat()));
+                        targetLocation.setLongitude(Double.parseDouble(chargings.get(i).getLongi()));
+                        float distance = location.distanceTo(targetLocation) /1000;
+                        if(distance<=10){
+                            LatLng latLng = new LatLng(Double.parseDouble(chargings.get(i).lat), Double.parseDouble(chargings.get(i).longi));
+                            marker.position(latLng);
+                            marker.title("충전소의 주소 : "+chargings.get(i).addr);
+                            marker.snippet("충전기 타입 : "+chargings.get(i).cpNm+"\n"
+                                    +"충전 방식 : " + chargings.get(i).cpTp + "\n");
+                            mMap.addMarker(marker);
+                        }
+                    }
                 }
 
             }
@@ -147,17 +183,35 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     @Override
     public boolean onMarkerClick(Marker marker) {
         mMap.moveCamera(CameraUpdateFactory.newLatLng(marker.getPosition()));
-        Toast.makeText(this, marker.getTitle() +"\n"+marker.getSnippet(),Toast.LENGTH_SHORT).show();
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+
+        builder.setTitle("충전소 상세 설명").setMessage(marker.getTitle()+"\n"+marker.getSnippet());
+
+
+        builder.setPositiveButton("확인", new DialogInterface.OnClickListener(){
+            @Override
+            public void onClick(DialogInterface dialog, int id)
+            {
+                Toast.makeText(getApplicationContext(), "확인 하였습니다.", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        AlertDialog alertDialog = builder.create();
+        alertDialog.show();
+
+        //Toast.makeText(this, marker.getTitle() +"\n"+marker.getSnippet(),Toast.LENGTH_SHORT).show();
         return true;
     }
 
 
     class ProgressTask extends AsyncTask<String, Integer, ArrayList<Charging>>{
+        String key="us2ROEBp96Lg%2F%2FFoXYqqzHC3S1TgYQQFrruf%2FbjcENdpvC3PsZnoWsV1jb8VJLuNXorx%2BL75uwFTfFLSj2bI8Q%3D%3D";
         GoogleMap googleMap;
         String TAG = "AsyncTask";
-
         @Override
         protected ArrayList<Charging> doInBackground(String... strings) {
+            Log.d(TAG,"AsyncTask시작");
             ArrayList<Charging> chargingArrayList = new ArrayList<Charging>();
             StringBuffer buffer=new StringBuffer();
 //        String str= edit.getText().toString();//EditText에 작성된 Text얻어오기
@@ -165,6 +219,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
             String queryUrl="http://openapi.kepco.co.kr/service/EvInfoServiceV2/getEvSearchList?pageNo=1&numOfRows=3000&ServiceKey="+key;
             try{
+                Log.d(TAG,"파싱 시작 ");
 
                 Charging charging = null;
 
@@ -256,11 +311,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             } catch (Exception e){
                 e.printStackTrace();
             }
-//        return buffer.toString();//StringBuffer 문자열 객체 반환
-
-
             return chargingArrayList;
-
         }
 
         @Override
@@ -279,25 +330,25 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
                 switch (Integer.parseInt(chargings.get(i).cpTp)){
                     case 1 :
-                        cpTP="B타입(5핀)";
+                        chargings.get(i).setCpTp("B타입(5핀)");
                     case 2:
-                        cpTP="C타입(5핀)";
+                        chargings.get(i).setCpTp("C타입(5핀)");
                     case 3:
-                        cpTP="BC타입(5핀)";
+                        chargings.get(i).setCpTp("BC타입(5핀)");
                     case 4:
-                        cpTP="BC타입(7핀)";
+                        chargings.get(i).setCpTp("BC타입(7핀)");
                     case 5:
-                        cpTP="DC차데모";
+                        chargings.get(i).setCpTp("DC차데모");
                     case 6:
-                        cpTP="AC3상";
+                        chargings.get(i).setCpTp("AC3상");
                     case 7:
-                        cpTP="DC콤보";
+                        chargings.get(i).setCpTp("DC콤보");
                     case 8:
-                        cpTP="DC차데모+DC콤보";
+                        chargings.get(i).setCpTp("DC차데모+DC콤보");
                     case 9:
-                        cpTP="DC차데모+AC3상";
+                        chargings.get(i).setCpTp("DC차데모+AC3상");
                     case 10:
-                        cpTP="DC차데모+DC콤보+AC3상";
+                        chargings.get(i).setCpTp("DC차데모+DC콤보+AC3상");
                     default:{
                         break;
                     }
@@ -308,19 +359,14 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 markerOptions.position(latLng);
                 markerOptions.title("충전소의 주소 : "+chargings.get(i).addr);
                 markerOptions.snippet("충전기 타입 : "+chargings.get(i).cpNm+"\n"
-                        +"충전 방식 : " + cpTP + "\n");
-
-                Log.d(TAG,"충전소의 주소 : "+chargings.get(i).addr+"\n"
-                        +"충전기 타입 : "+chargings.get(i).cpNm+"\n"
-                        +"충전 방식 : " + cpTP + "\n");
+                        +"충전 방식 : " + chargings.get(i).getCpTp() + "\n");
 
                 mMap.addMarker(markerOptions);
 
 
             }
-            
+
             Toast.makeText(getApplicationContext(), "파싱 완료", Toast.LENGTH_LONG).show();
         }
     }
 }
-
