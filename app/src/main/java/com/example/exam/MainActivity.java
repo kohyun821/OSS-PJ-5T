@@ -107,7 +107,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 marker.position(latLng2);
                 marker.title("충전소의 주소 : "+chargings.get(i).addr);
                 marker.snippet("충전기 타입 : "+chargings.get(i).cpNm+"\n"
-                        +"충전 방식 : " + chargings.get(i).cpTp + "\n");
+                        +"충전 방식 : " + chargings.get(i).getCpTp() + "\n"
+                        +"충전 가능 여부 : "+chargings.get(i).getCpStat()+"\n"
+                        +"마지막 갱신 시각 : "+chargings.get(i).getStatUpdateDatetime()+"\n");
                 mMap.addMarker(marker);
                 scale++;
 
@@ -156,7 +158,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                             marker.position(latLng);
                             marker.title("충전소의 주소 : "+chargings.get(i).addr);
                             marker.snippet("충전기 타입 : "+chargings.get(i).cpNm+"\n"
-                                    +"충전 방식 : " + chargings.get(i).cpTp + "\n");
+                                    +"충전 방식 : " + chargings.get(i).getCpTp() + "\n"
+                                    +"충전 가능 여부 : "+chargings.get(i).getCpStat()+"\n"
+                                    +"마지막 갱신 시각 : "+chargings.get(i).getStatUpdateDatetime()+"\n");
                             mMap.addMarker(marker);
                         }
                     }
@@ -325,41 +329,62 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             for(int i = 0; i<chargings.size();i++){
 
 
-                String cpTP = "";
-
-
-                switch (Integer.parseInt(chargings.get(i).cpTp)){
-                    case 1 :
-                        chargings.get(i).setCpTp("B타입(5핀)");
-                    case 2:
-                        chargings.get(i).setCpTp("C타입(5핀)");
-                    case 3:
-                        chargings.get(i).setCpTp("BC타입(5핀)");
-                    case 4:
-                        chargings.get(i).setCpTp("BC타입(7핀)");
-                    case 5:
-                        chargings.get(i).setCpTp("DC차데모");
-                    case 6:
-                        chargings.get(i).setCpTp("AC3상");
-                    case 7:
-                        chargings.get(i).setCpTp("DC콤보");
-                    case 8:
-                        chargings.get(i).setCpTp("DC차데모+DC콤보");
-                    case 9:
-                        chargings.get(i).setCpTp("DC차데모+AC3상");
-                    case 10:
-                        chargings.get(i).setCpTp("DC차데모+DC콤보+AC3상");
-                    default:{
-                        break;
-                    }
+                if(chargings.get(i).cpTp.equals("1")){
+                    chargings.get(i).setCpTp("B타입(5핀)");
+                }else if(chargings.get(i).cpTp.equals("2")){
+                   chargings.get(i).setCpTp("C타입(5핀)");
                 }
+                else if(chargings.get(i).cpTp.equals("3")){
+                    chargings.get(i).setCpTp("BC타입(5핀)");
+                }
+                else if(chargings.get(i).cpTp.equals("4")){
+                    chargings.get(i).setCpTp("BC타입(7핀)");
+                }
+                else if(chargings.get(i).cpTp.equals("5")){
+                    chargings.get(i).setCpTp("DC차데모");
+                }
+                else if(chargings.get(i).cpTp.equals("6")){
+                    chargings.get(i).setCpTp("AC3상");
+                }
+                else if(chargings.get(i).cpTp.equals("7")){
+                    chargings.get(i).setCpTp("DC콤보");
+                }
+                else if(chargings.get(i).cpTp.equals("8")){
+                    chargings.get(i).setCpTp("DC차데모+DC콤보");
+                }
+                else if(chargings.get(i).cpTp.equals("9")){
+                    chargings.get(i).setCpTp("DC차데모+AC3상");
+                }
+                else if(chargings.get(i).cpTp.equals("10")){
+                    chargings.get(i).setCpTp("DC차데모+DC콤보+AC3상");
+                }else{
+                    Log.d(TAG,"일어날 리 없음.");
+                }
+
+                if(chargings.get(i).cpStat.equals("1")){
+                    chargings.get(i).setCpStat("충전가능");
+                }else if(chargings.get(i).cpStat.equals("2")){
+                    chargings.get(i).setCpStat("충전중");
+                }
+                else if(chargings.get(i).cpStat.equals("3")){
+                    chargings.get(i).setCpStat("고장/점검");
+                }
+                else if(chargings.get(i).cpStat.equals("4")){
+                    chargings.get(i).setCpStat("통신장애");
+                }else{
+                    chargings.get(i).setCpStat("통신미연결");
+                }
+                Log.d(TAG,"테스트 : cptp : "+chargings.get(i).cpTp);
+                Log.d(TAG,"테스트 : cpStat : "+chargings.get(i).cpStat);
 
                 LatLng latLng = new LatLng(Double.parseDouble(chargings.get(i).lat), Double.parseDouble(chargings.get(i).longi));
 
                 markerOptions.position(latLng);
                 markerOptions.title("충전소의 주소 : "+chargings.get(i).addr);
                 markerOptions.snippet("충전기 타입 : "+chargings.get(i).cpNm+"\n"
-                        +"충전 방식 : " + chargings.get(i).getCpTp() + "\n");
+                        +"충전 방식 : " + chargings.get(i).getCpTp() + "\n"
+                +"충전 가능 여부 : "+chargings.get(i).getCpStat()+"\n"
+                +"마지막 갱신 시각 : "+chargings.get(i).getStatUpdateDatetime()+"\n");
 
                 mMap.addMarker(markerOptions);
 
